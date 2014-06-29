@@ -19,32 +19,32 @@
 package org.scalamqtt.client
 
 import java.util.UUID
+import akka.actor.ActorSystem
 
-import akka.actor.{Actor, ActorSystem}
 import org.scalamqtt.impl.comm.akka.ConnectionActor
 import org.scalamqtt.impl.protocol.ProtocolActor
 
-import scala.util.Success
+import scala.concurrent.stm.Ref
 
 
 object MQTTAkkaClient{
 
-  def apply(host:String, port:String):Either[Throwable,Boolean]= {Success(true)}
+  def apply(host:String = "localhost", port:Int = 1883, sec:Boolean = false):Either[Throwable,Boolean]= {Right(true)}
 
 }
 
 
-class MQTTAkkaClient(host:String, port:String){
+class MQTTAkkaClient(host:String, port:Int){
 
-  private def MQTTAkkaClient (){}
+  private def MQTTAkkaClient ()={}
 
   private val aSystem = ActorSystem(UUID.randomUUID().toString.replace('-','\0'))
 
-  private val conn: ConnectionActor
+  private val conn: Ref[Option[ConnectionActor]] = Ref(None)
 
-  private val proto: ProtocolActor
+  private val proto: Ref[Option[ProtocolActor]] = Ref(None)
 
-  def shutdown():Either[String, Boolean] ={}
+  def shutdown():Either[String, Boolean] = Right(true)
 
 }
 

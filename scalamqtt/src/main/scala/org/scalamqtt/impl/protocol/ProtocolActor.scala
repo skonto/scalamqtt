@@ -22,5 +22,10 @@ import akka.actor.{ActorLogging, Actor}
 
 class ProtocolActor extends Actor with ActorLogging{
 
+  def receive ={
+
+    case _ =>
+
+  }
 
 }

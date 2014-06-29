@@ -29,7 +29,7 @@ case class MQTTMessageFixedHeader(firstOctet: Byte, remainingLength: Byte
                               ) extends  MQTTMessageHeaderPart{
 
 
-
+def toBinary():Array[Byte] = Array[Byte]{0}
 
 }
 
