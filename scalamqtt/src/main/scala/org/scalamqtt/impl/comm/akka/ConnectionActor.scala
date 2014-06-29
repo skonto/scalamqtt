@@ -69,7 +69,6 @@ private[scalamqtt] class ConnectionActor(host: String, port: Int,
 
         context become register
 
-        println("here")
 
       } catch {
 
@@ -95,7 +94,7 @@ private[scalamqtt] class ConnectionActor(host: String, port: Int,
 
     case c@Connected(remote, local) => {
 
-      println("here2")
+
       sender() ! Tcp.Register(self)
 
       val connection = sender()
