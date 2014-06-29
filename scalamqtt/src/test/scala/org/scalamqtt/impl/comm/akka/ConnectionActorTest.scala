@@ -21,12 +21,19 @@
 
 package org.scalamqtt.impl.comm.akka
 
-import akka.actor.{Props, Actor, ActorSystem}
-import akka.util.ByteString
+import java.util.concurrent.TimeUnit
+
+import akka.actor.{ActorRef, Props, Actor, ActorSystem}
+import akka.util.{Timeout, ByteString}
+import akka.pattern.ask
 import org.junit.runner.RunWith
 import org.scalamqtt.common.Server
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.{Matchers, BeforeAndAfterAll, FunSuite}
+
+import scala.concurrent.{Future, Await}
+import scala.concurrent.duration.Duration
+import scala.concurrent.stm.Ref
 
 
 @RunWith(classOf[JUnitRunner])
@@ -47,13 +54,25 @@ class ConnectionActorTest extends FunSuite with Matchers with BeforeAndAfterAll 
 
   test("An actor is created") {
 
+    val msg = "blablabla"
+
     val l = actorSystem.actorOf(Props(new Listener(host,port)))
 
-   // implicit val timeout : Timeout  = Timeout(10, TimeUnit.SECONDS)
+    implicit val timeout : Timeout  = Timeout(10, TimeUnit.SECONDS)
 
-    l ! "connect"
+    Thread.sleep(1000) //this is enough to connect
 
-    Thread.sleep(1000)
+    val f1= l ? "status"
+
+    val ret1: Boolean = Await.result(f1, Duration(10, TimeUnit.SECONDS)).asInstanceOf[Boolean]
+
+    ret1 should be(true)
+
+    val f2=l ? msg
+
+    val ret2= Await.result(f2, Duration(10, TimeUnit.SECONDS))
+
+    ret2 should be(msg)
 
   }
 
@@ -63,16 +82,23 @@ class ConnectionActorTest extends FunSuite with Matchers with BeforeAndAfterAll 
 class Listener(host:String, port:Int) extends Actor {
 
   val conn = context.system.actorOf(Props(new ConnectionActor(host, port, self)))
+  conn ! AConnect()
+
+  val connected: Ref[Boolean] = Ref(false)
+
+  val requester: Ref[Option[ActorRef]]  =  Ref(None)
+
 
   def receive() = {
 
-    case "connect" =>
+    case "status" => sender() ! connected.single.get
 
-      conn ! AConnect()
+    case data:String => requester.single.set(Some(sender())); conn ! ByteString(data.getBytes())
 
-    case a:AConnected => conn ! ByteString("Hello".getBytes())
+    case a:AConnected => connected.single.set(true)
 
-    case y:ByteString => println("Listener: "+ y.utf8String)
+    case y:ByteString => val retVal =  y.utf8String
+      println("Listener: "+ retVal);  requester.single.get.map{r => r ! retVal}
 
     case v@_ => println("Listener(unknown message):" + v)
 
